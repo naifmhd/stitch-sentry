@@ -271,4 +271,40 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Pest documentation and updated code examples.
 - IMPORTANT: Activate `pest-testing` every time you're working with a Pest or testing-related task.
 
+## StitchSentry Project Rules (must follow)
+
+### Architecture
+
+- Keep domain logic in `app/Domain/*` (Qa, Batch, Billing, Llm).
+- Controllers must be thin; validation uses Form Requests.
+
+### Automation
+
+- Never block HTTP for long operations. Use queued jobs with named queues:
+    - ingest, parse, render, qa, ai, pdf, export
+- Use Horizon for monitoring.
+
+### Realtime (Reverb)
+
+- All realtime payloads must match `docs/dev/realtime-events.md` exactly.
+- Broadcast progress after DB updates (not before).
+- QA run page must fetch initial state via HTTP and then apply realtime updates.
+
+### Paywall
+
+- All paid features must be enforced server-side via FeatureGate (controllers AND jobs).
+- Credits debits must be idempotent (unique idempotency_key per org).
+
+### QA rules
+
+- Rule keys must match `docs/dev/qa-rules.md` exactly.
+- Thresholds come from `config/qa.php`.
+
+### LLM
+
+- All LLM calls must go through the provider router abstraction (OpenAI/Gemini/Anthropic).
+- Allow per-org API keys stored encrypted at rest.
+- Never send raw files to LLM—only structured metrics + findings.
+- Require strict JSON output and validate it before saving.
+
 </laravel-boost-guidelines>
