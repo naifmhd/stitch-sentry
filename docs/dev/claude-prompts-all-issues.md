@@ -3,7 +3,7 @@
 Use these prompts **one issue at a time** with Claude Code.
 Before running, ensure `CLAUDE.md` exists at repo root with your constraints.
 
-General instruction for every run:
+## General instruction for every run
 
 - Follow `docs/dev/conventions.md`
 - Match realtime payloads exactly per `docs/dev/realtime-events.md`
@@ -15,6 +15,7 @@ General instruction for every run:
     - `php artisan migrate:fresh --seed`
     - `php artisan test` (or add at least a smoke test)
     - `npm run build` (or if not available, `npm run dev` sanity)
+    - `vendor/bin/pint --dirty --format agent` (if any PHP files changed)
 
 ---
 
@@ -44,6 +45,7 @@ Implement ISSUE 0.3 from `docs/dev/github-issues.md`.
 Configure Redis queues and Horizon. Add a test job and a route/button in a Dev page to dispatch it.
 Ensure the job uses a named queue (`ingest`).
 Verify processing via Horizon and log output.
+Add a Pest test that asserts the job is pushed to the correct queue.
 
 ### ISSUE 0.4 — Laravel Reverb + Echo client
 
@@ -53,6 +55,7 @@ Configure Laravel Reverb broadcasting and Vue Echo client.
 Create `resources/js/Pages/Dev/ReverbTest.vue` subscribing to `private-org.{orgId}` and printing payloads.
 Add a backend route/controller to broadcast a sample `qa.run.progress` payload matching `docs/dev/realtime-events.md` exactly.
 Verify locally with `php artisan reverb:start`.
+Add a Pest test for the broadcast endpoint (auth + status code).
 
 ---
 
@@ -72,7 +75,7 @@ Add tests for org switching and authorization.
 **Prompt**
 Implement ISSUE 1.2 from `docs/dev/github-issues.md`.
 Create `FeatureGate` reading `config/features.php` and implementing:
-canRunFullRules, canUseAiSummary, canExportPdf, canUsePresets, canRunBatch, maxDailyQaRuns, maxFileSizeBytes.
+`canRunFullRules`, `canUseAiSummary`, `canExportPdf`, `canUsePresets`, `canRunBatch`, `maxDailyQaRuns`, `maxFileSizeBytes`.
 Enforce gates server-side in relevant controllers and (where applicable) in jobs.
 Add unit tests for FeatureGate.
 
@@ -93,6 +96,7 @@ Implement Stripe checkout + billing portal link + webhook receiver with signatur
 Persist stripe_customer_id, stripe_subscription_id, status in `subscriptions`.
 Map subscription to plan slug used by FeatureGate.
 Add Billing page showing current plan/status. Include local dev instructions.
+Add minimal tests around webhook signature verification logic (unit test).
 
 ---
 
@@ -119,6 +123,10 @@ Backend upload endpoint:
 - create `design_files` row
   Add throttling and meaningful errors.
   Return design_file id and redirect target.
+  Add tests for:
+- guest blocked
+- invalid extension rejected
+- file stored + DB row created
 
 ### ISSUE 2.3 — CreateQaRunJob pipeline starter
 
@@ -128,6 +136,7 @@ Create `qa_runs` schema and after upload create a run, dispatch `CreateQaRunJob`
 Create a QA run live page that fetches current state via HTTP and listens to Reverb events on `private-org.{orgId}`.
 Broadcast `qa.run.progress` exactly per `docs/dev/realtime-events.md`.
 Include stage timeline + progress bar.
+Add tests asserting QA run is created and job dispatched.
 
 ---
 
@@ -154,6 +163,7 @@ Implement ParseEmbroideryFileJob:
 - updates `qa_runs` status/progress
 - broadcasts `qa.run.progress`
   Add a parser-mock mode for local dev (config flag) that returns deterministic fake metrics for DST files.
+  Add tests to ensure metrics are stored and progress updates occur.
 
 ### ISSUE 3.3 — RenderPreviewsJob + artifacts
 
@@ -166,6 +176,7 @@ Implement RenderPreviewsJob:
 - creates `qa_artifacts` records
 - broadcasts `qa.run.artifact.ready` per events doc
   Update QA run page to display artifacts as soon as they arrive.
+  Add tests that artifacts rows are created.
 
 ---
 
@@ -195,6 +206,7 @@ Implement rule classes for:
 - tiny_text_risk
   Each finding includes: severity, title, message, recommendation, evidence_json.
   Ensure thresholds are read from config and vary per preset.
+  Add targeted unit tests for each rule class.
 
 ### ISSUE 4.3 — Scoring + risk level
 
@@ -203,6 +215,7 @@ Implement ISSUE 4.3 from `docs/dev/github-issues.md`.
 Create scoring service using weights from `config/qa.php`.
 Store score + risk level on `qa_runs` and include in `qa.run.completed` event.
 Update UI to show a score gauge and risk label.
+Add tests verifying score calculation determinism.
 
 ---
 
@@ -223,6 +236,7 @@ Implement ISSUE 5.2 from `docs/dev/github-issues.md`.
 Create `api_keys` table storing encrypted API keys per org/provider.
 Create UI in Org Settings to add/update/test keys.
 Testing endpoint should perform a minimal call and return success/failure safely.
+Add tests ensuring encryption and authorization.
 
 ### ISSUE 5.3 — GenerateAiSummaryJob (paywalled)
 
@@ -236,6 +250,7 @@ GenerateAiSummaryJob:
 - store ai_summary_json on qa_runs
 - broadcast progress stages
   Fallback to rules-only summary if all providers fail.
+  Add tests to ensure paywall enforcement and schema validation.
 
 ---
 
@@ -245,8 +260,7 @@ GenerateAiSummaryJob:
 
 **Prompt**
 Implement ISSUE 6.1 from `docs/dev/github-issues.md`.
-Create a premium PDF report template:
-cover page, score, top actions, findings table, embedded preview+heatmaps, operator checklist.
+Create a premium PDF report template: cover page, score, top actions, findings table, embedded preview+heatmaps, operator checklist.
 Ensure it looks like a paid SaaS deliverable (spacing, typography, sectioning).
 
 ### ISSUE 6.2 — GeneratePdfReportJob (paywalled)
@@ -260,6 +274,7 @@ GeneratePdfReportJob:
 - create qa_artifacts row
 - broadcast `qa.run.artifact.ready` with kind `pdf`
   Update UI to show Download PDF when ready.
+  Add tests to ensure job creates artifact and paywall blocks free users.
 
 ---
 
@@ -272,6 +287,7 @@ Implement ISSUE 7.1 from `docs/dev/github-issues.md`.
 Build Projects list/detail and QA run history pages with filters (preset/severity/date).
 Add MySQL indexes to keep queries fast.
 Add server-side pagination and search by filename/checksum.
+Add tests for authorization and basic filtering.
 
 ### ISSUE 7.2 — Shareable report links (tokenized)
 
@@ -279,7 +295,7 @@ Add server-side pagination and search by filename/checksum.
 Implement ISSUE 7.2 from `docs/dev/github-issues.md`.
 Create tokenized share links with optional expiry.
 Public view must be read-only and only show permitted sections (respect paywall).
-Add tests ensuring tokens cannot access other org data.
+Add tests ensuring tokens cannot access other org data and expiry is enforced.
 
 ### ISSUE 7.3 — QA feedback loop + insights
 
@@ -287,7 +303,8 @@ Add tests ensuring tokens cannot access other org data.
 Implement ISSUE 7.3 from `docs/dev/github-issues.md`.
 Add feedback UI (stitched ok / thread breaks / puckered / trims messy) with machine/fabric fields.
 Store to qa_feedback. Build an insights dashboard: top failing rules, failure rates by preset.
-Ensure the dashboard queries are optimized.
+Ensure dashboard queries are optimized with indexes.
+Add tests verifying feedback is stored and restricted to org.
 
 ---
 
@@ -300,6 +317,7 @@ Implement ISSUE 8.1 from `docs/dev/github-issues.md`.
 Create templates table with placeholder_config_json and base_design_file_id.
 UI: choose base design, set placeholder area and style preset.
 Keep v1 focused on proof generation (not stitch-file edits).
+Add tests for template creation.
 
 ### ISSUE 8.2 — CSV import + column mapping
 
@@ -308,6 +326,7 @@ Implement ISSUE 8.2 from `docs/dev/github-issues.md`.
 CSV upload + column mapping UI. Validate required columns.
 Create batch_runs and batch_items.
 Show preview and validation errors per row.
+Add tests for CSV validation and batch creation.
 
 ### ISSUE 8.3 — ProcessBatchRunJob + realtime per-item events
 
@@ -320,6 +339,7 @@ ProcessBatchRunJob:
 - create approval token
 - broadcast `batch.run.progress` and `batch.item.completed` exactly per events doc
   Ensure the job is resumable and does not reprocess completed items.
+  Add tests for job resumption/idempotency behavior.
 
 ### ISSUE 8.4 — Approvals portal (public)
 
@@ -330,6 +350,7 @@ Public approval page per token:
 - view proof
 - approve or request revision with notes
   Update owner UI live via Reverb. Prevent token enumeration.
+  Add tests for token access and update behavior.
 
 ### ISSUE 8.5 — Batch export zip (paywalled + credits)
 
@@ -341,6 +362,7 @@ GenerateBatchExportZipJob:
 - generate zip of proofs + job sheet
 - pause batch if credits insufficient
   Broadcast completion events and expose download route securely.
+  Add tests for credits enforcement and zip generation.
 
 ---
 
@@ -356,6 +378,7 @@ Admin-only pages:
 - toggle LLM providers and defaults
 - view job failures and retry controls
   Use policies and protect routes.
+  Add tests for admin authorization.
 
 ### ISSUE 9.2 — Support IDs + friendly failures
 
@@ -367,7 +390,7 @@ Standardize failure handling:
 - store error_code/support_id on run/batch
 - broadcast `qa.run.failed` / `batch.run.failed`
 - UI displays user-friendly message + support_id
-  Add tests for failure persistence.
+  Add tests for failure persistence and event dispatch.
 
 ### ISSUE 9.3 — Rate limiting + abuse protections
 

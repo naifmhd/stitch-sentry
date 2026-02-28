@@ -50,7 +50,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Documentation Files
 
-- You must only create documentation files if explicitly requested by the user.
+- Only create new documentation files if explicitly requested. Updating existing docs (README / existing docs/\*) is allowed when necessary.
 
 ## Replies
 
@@ -270,6 +270,7 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 - Do NOT delete tests without approval.
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Pest documentation and updated code examples.
 - IMPORTANT: Activate `pest-testing` every time you're working with a Pest or testing-related task.
+- Prefer feature tests unless a unit test is clearly better (e.g., pure services).
 
 ## StitchSentry Project Rules (must follow)
 
@@ -277,6 +278,8 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 
 - Keep domain logic in `app/Domain/*` (Qa, Batch, Billing, Llm).
 - Controllers must be thin; validation uses Form Requests.
+- Before implementing a feature, read the relevant docs in docs/dev/\* and treat them as the source of truth.
+- Treat docs/dev/\* (conventions, events, rule keys) as the source of truth.
 
 ### Automation
 
