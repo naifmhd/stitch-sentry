@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\Billing\SubscribeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dev\BroadcastTestController;
 use App\Http\Controllers\Dev\FeatureGateCheckController;
@@ -23,6 +25,10 @@ Route::middleware($authenticatedMiddleware)->group(function () {
     Route::get('organizations/{organization}/settings', [OrgSettingsController::class, 'show'])->name('organizations.settings');
 
     Route::get('organizations/{organization}/credits', \App\Http\Controllers\Billing\CreditsController::class)->name('billing.credits');
+
+    // Billing
+    Route::get('billing', BillingController::class)->name('billing');
+    Route::post('billing/subscribe/{planSlug}', SubscribeController::class)->name('billing.subscribe');
 });
 
 if (app()->environment(['local', 'testing'])) {

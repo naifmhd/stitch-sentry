@@ -6,16 +6,17 @@ use App\Models\Organization;
 
 class FeatureGate
 {
+    public function __construct(private readonly PlanResolver $planResolver) {}
+
     /**
      * Resolve the organization's current plan slug.
-     * Falls back to 'free' if the plan is unrecognised or null.
+     *
+     * Subscription-first: uses PlanResolver which checks active Cashier
+     * subscription before falling back to organizations.plan_slug or 'free'.
      */
     public function planSlug(Organization $org): string
     {
-        $slug = $org->plan_slug ?? 'free';
-        $known = array_keys(config('features.plans', []));
-
-        return in_array($slug, $known, true) ? $slug : 'free';
+        return $this->planResolver->resolve($org);
     }
 
     /**
