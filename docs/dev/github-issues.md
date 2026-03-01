@@ -184,26 +184,63 @@ Usage-based billing foundation with idempotent debits.
 
 ---
 
-## ISSUE 1.4 — Stripe subscription skeleton + webhooks
+## ISSUE 1.4 — Paddle Billing via laravel/cashier-paddle (Cashier) + webhooks
 
 **Goal**
-Subscription plan tracking for FeatureGate.
+Use `laravel/cashier-paddle` (Paddle Billing) to manage subscriptions and webhook handling, and connect subscription plan to FeatureGate (plans are defined in `config/features.php`).
 
 **Scope**
 
-- Create `subscriptions` table:
-    - org_id, stripe_customer_id, stripe_subscription_id, status, plan_slug, period_end_at
-- Implement:
-    - start checkout (stub price id)
-    - billing portal link
-    - webhook receiver (signature verification)
-- On webhook updates, update `subscriptions.plan_slug` used by FeatureGate.
+### 1) Install & configure Cashier Paddle
+
+- Install: `composer require laravel/cashier-paddle` :contentReference[oaicite:5]{index=5}
+- Publish Cashier migrations: `php artisan vendor:publish --tag="cashier-migrations"` :contentReference[oaicite:6]{index=6}
+- Run migrations (creates `customers`, `subscriptions`, `subscription_items`, `transactions`). :contentReference[oaicite:7]{index=7}
+
+### 2) Billable model strategy (Org-billing)
+
+- Make **Organization** the billable entity (multi-tenant SaaS):
+    - Add `Laravel\Paddle\Billable` trait to `Organization` model. :contentReference[oaicite:8]{index=8}
+- Ensure org has a “billing owner” user for Paddle defaults (name/email) as needed.
+
+### 3) Billing page + subscription start
+
+- Add `/billing` Inertia page:
+    - Show current org subscription status (from Cashier tables)
+    - List paid plans from `config/features.php` (exclude `free`)
+    - Provide “Upgrade” buttons that create a Cashier checkout for a plan price id (configured mapping plan_slug → Paddle price id)
+- Store mapping in config (e.g., `config/paddle_plans.php`):
+    - plan*slug → Paddle price_id (pri*\*)
+    - Validate plan_slug exists in `config/features.php`
+
+### 4) Webhooks (Cashier built-in)
+
+- Configure Paddle webhook URL in Paddle dashboard:
+    - default path: `/paddle/webhook` :contentReference[oaicite:9]{index=9}
+- Exclude `paddle/*` from CSRF protection in `bootstrap/app.php` (Laravel 12 style). :contentReference[oaicite:10]{index=10}
+- Enable webhook signature verification by setting `PADDLE_WEBHOOK_SECRET` env var. :contentReference[oaicite:11]{index=11}
+- Optionally register listeners for Cashier events (SubscriptionCreated/Updated/Canceled) to sync `organizations.plan_slug` or your own app-level plan cache. :contentReference[oaicite:12]{index=12}
+
+### 5) FeatureGate integration
+
+- FeatureGate must resolve plan like:
+    1. If org has an active subscription (Cashier), map subscription’s Paddle price_id to a plan_slug
+    2. else fallback to `organizations.plan_slug` or `free`
 
 **Acceptance criteria**
 
-- Webhook endpoint verifies signature (unit test).
-- Billing page shows plan status from DB.
-- No long work in webhook handler (queue if needed).
+- Cashier installed and migrations published/applied.
+- Billing page shows subscription status and available plans from `config/features.php`.
+- Webhook endpoint is working via Cashier at `/paddle/webhook` and:
+    - CSRF excluded for `paddle/*`
+    - signature verification enabled via `PADDLE_WEBHOOK_SECRET`
+- Plan resolution works:
+    - active subscription → FeatureGate uses mapped plan
+    - no subscription → FeatureGate falls back to org plan/free
+- Tests:
+    - Unit test for plan mapping (price_id → plan_slug)
+    - Feature test for Billing page showing plan/status for an org
+    - If feasible, a test asserting webhook route exists and CSRF exclusion is configured
 
 ---
 

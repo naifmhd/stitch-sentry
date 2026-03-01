@@ -21,6 +21,8 @@ Route::middleware($authenticatedMiddleware)->group(function () {
 
     Route::post('organizations/switch', OrgSwitcherController::class)->name('organizations.switch');
     Route::get('organizations/{organization}/settings', [OrgSettingsController::class, 'show'])->name('organizations.settings');
+
+    Route::get('organizations/{organization}/credits', \App\Http\Controllers\Billing\CreditsController::class)->name('billing.credits');
 });
 
 if (app()->environment(['local', 'testing'])) {

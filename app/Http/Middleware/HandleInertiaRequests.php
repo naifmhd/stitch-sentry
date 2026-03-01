@@ -50,6 +50,11 @@ class HandleInertiaRequests extends Middleware
                 ->all();
         }
 
+        $creditsBalance = null;
+        if ($currentOrg) {
+            $creditsBalance = app(\App\Domain\Billing\Services\CreditsService::class)->balance($currentOrg);
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -59,6 +64,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentOrganization' => $currentOrg ? ['id' => $currentOrg->id, 'name' => $currentOrg->name] : null,
             'organizations' => $organizations,
+            'creditsBalance' => $creditsBalance,
         ];
     }
 }

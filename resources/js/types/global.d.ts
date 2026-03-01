@@ -26,6 +26,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentOrganization: OrgSummary | null;
             organizations: OrgSummary[];
+            creditsBalance: number | null;
             [key: string]: unknown;
         };
     }

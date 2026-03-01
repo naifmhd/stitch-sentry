@@ -39,4 +39,10 @@ class Organization extends Model
     {
         return $this->hasMany(DesignFile::class);
     }
+
+    /** @return HasMany<CreditsLedgerEntry, $this> */
+    public function creditsLedgerEntries(): HasMany
+    {
+        return $this->hasMany(CreditsLedgerEntry::class);
+    }
 }
