@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dev\BroadcastTestController;
 use App\Http\Controllers\Dev\PingQueueController;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
@@ -19,6 +20,8 @@ Route::middleware($authenticatedMiddleware)->group(function () {
 if (app()->environment(['local', 'testing'])) {
     Route::middleware($authenticatedMiddleware)->group(function () {
         Route::post('dev/ping', PingQueueController::class)->name('dev.ping');
+        Route::get('dev/reverb-test', [BroadcastTestController::class, 'show'])->name('dev.reverb-test');
+        Route::post('dev/reverb-test', [BroadcastTestController::class, 'broadcast'])->name('dev.broadcast-test');
     });
 }
 
