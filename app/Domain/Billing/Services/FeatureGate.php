@@ -3,10 +3,13 @@
 namespace App\Domain\Billing\Services;
 
 use App\Models\Organization;
+use App\Models\QaRun;
 
 class FeatureGate
 {
-    public function __construct(private readonly PlanResolver $planResolver) {}
+    public function __construct(private readonly PlanResolver $planResolver)
+    {
+    }
 
     /**
      * Resolve the organization's current plan slug.
@@ -78,9 +81,7 @@ class FeatureGate
     /**
      * Checks whether the org can start another QA run today.
      *
-     * Uses design_files as the proxy for QA run count (one upload = one QA run)
-     * until a dedicated qa_runs table exists.  The compound index on
-     * (organization_id, created_at) makes this query efficient.
+     * The compound index on (organization_id, created_at) keeps this efficient.
      *
      * Dates are compared in app timezone (config('app.timezone')).
      */
@@ -88,7 +89,7 @@ class FeatureGate
     {
         $today = now()->toDateString();
 
-        $used = $org->designFiles()
+        $used = QaRun::where('organization_id', $org->id)
             ->whereDate('created_at', $today)
             ->count();
 

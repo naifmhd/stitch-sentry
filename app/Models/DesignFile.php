@@ -43,4 +43,10 @@ class DesignFile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<QaRun, $this> */
+    public function qaRuns(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(QaRun::class);
+    }
 }

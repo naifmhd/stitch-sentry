@@ -41,6 +41,12 @@ class Organization extends Model
         return $this->hasMany(DesignFile::class);
     }
 
+    /** @return HasMany<QaRun, $this> */
+    public function qaRuns(): HasMany
+    {
+        return $this->hasMany(QaRun::class);
+    }
+
     /** @return HasMany<CreditsLedgerEntry, $this> */
     public function creditsLedgerEntries(): HasMany
     {

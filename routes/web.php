@@ -8,6 +8,7 @@ use App\Http\Controllers\Dev\FeatureGateCheckController;
 use App\Http\Controllers\Dev\PingQueueController;
 use App\Http\Controllers\Organizations\OrgSettingsController;
 use App\Http\Controllers\Organizations\OrgSwitcherController;
+use App\Http\Controllers\QaRun\QaRunController;
 use App\Http\Controllers\Upload\IngestController;
 use App\Http\Controllers\Upload\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,10 @@ Route::middleware($authenticatedMiddleware)->group(function () {
     // Billing
     Route::get('billing', BillingController::class)->name('billing');
     Route::post('billing/subscribe/{planSlug}', SubscribeController::class)->name('billing.subscribe');
+
+    // QA Runs
+    Route::post('design-files/{designFile}/qa-runs', [QaRunController::class, 'store'])->name('qa-runs.store');
+    Route::get('qa-runs/{qaRun}', [QaRunController::class, 'show'])->name('qa-runs.show');
 });
 
 if (app()->environment(['local', 'testing'])) {

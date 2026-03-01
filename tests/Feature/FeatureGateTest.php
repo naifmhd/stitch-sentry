@@ -1,8 +1,8 @@
 <?php
 
 use App\Domain\Billing\Services\FeatureGate;
-use App\Models\DesignFile;
 use App\Models\Organization;
+use App\Models\QaRun;
 use App\Models\User;
 
 // ──────────────────────────────────────────────
@@ -87,12 +87,10 @@ describe('FeatureGate daily run limit', function () {
 
     test('canStartQaRunToday returns true when under limit', function () {
         $org = Organization::factory()->onPlan('free')->create(); // limit = 5
-        $user = User::factory()->create();
 
-        // 4 uploads today
-        DesignFile::factory()->count(4)->create([
+        // 4 qa runs today
+        QaRun::factory()->count(4)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now(),
         ]);
 
@@ -101,12 +99,10 @@ describe('FeatureGate daily run limit', function () {
 
     test('canStartQaRunToday returns false when limit is reached', function () {
         $org = Organization::factory()->onPlan('free')->create(); // limit = 5
-        $user = User::factory()->create();
 
-        // 5 uploads today — limit exactly hit
-        DesignFile::factory()->count(5)->create([
+        // 5 qa runs today — limit exactly hit
+        QaRun::factory()->count(5)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now(),
         ]);
 
@@ -115,12 +111,10 @@ describe('FeatureGate daily run limit', function () {
 
     test('yesterday uploads do not count against today limit', function () {
         $org = Organization::factory()->onPlan('free')->create(); // limit = 5
-        $user = User::factory()->create();
 
-        // 5 uploads yesterday
-        DesignFile::factory()->count(5)->create([
+        // 5 qa runs yesterday
+        QaRun::factory()->count(5)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now()->subDay(),
         ]);
 
@@ -129,12 +123,10 @@ describe('FeatureGate daily run limit', function () {
 
     test('limit increases when org is upgraded to starter', function () {
         $org = Organization::factory()->onPlan('starter')->create(); // limit = 200
-        $user = User::factory()->create();
 
-        // 5 uploads today — free limit, but org is on starter
-        DesignFile::factory()->count(5)->create([
+        // 5 qa runs today — free limit, but org is on starter
+        QaRun::factory()->count(5)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now(),
         ]);
 
@@ -190,9 +182,8 @@ describe('POST /dev/feature-gate-check', function () {
         $user->organizations()->attach($org, ['role' => 'owner']);
 
         // Exhaust today's quota
-        DesignFile::factory()->count(5)->create([
+        QaRun::factory()->count(5)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now(),
         ]);
 
@@ -211,10 +202,9 @@ describe('POST /dev/feature-gate-check', function () {
         $user = User::factory()->create();
         $user->organizations()->attach($org, ['role' => 'owner']);
 
-        // 5 uploads that would block a free org
-        DesignFile::factory()->count(5)->create([
+        // 5 qa runs that would block a free org
+        QaRun::factory()->count(5)->create([
             'organization_id' => $org->id,
-            'user_id' => $user->id,
             'created_at' => now(),
         ]);
 

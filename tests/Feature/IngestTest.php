@@ -3,6 +3,7 @@
 use App\Domain\Billing\Services\FeatureGate;
 use App\Models\DesignFile;
 use App\Models\Organization;
+use App\Models\QaRun;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -99,7 +100,7 @@ test('valid dst file is stored on s3 with the expected path pattern', function (
     $this->actingAs($user)
         ->withSession(['current_organization_id' => $org->id])
         ->post('/upload/ingest', ['file' => $file])
-        ->assertRedirect(route('upload.index'));
+        ->assertRedirect();
 
     $designFile = DesignFile::where('user_id', $user->id)->firstOrFail();
 
@@ -126,7 +127,7 @@ test('design_files record is created with correct fields after upload', function
     $this->actingAs($user)
         ->withSession(['current_organization_id' => $org->id])
         ->post('/upload/ingest', ['file' => $file])
-        ->assertRedirect(route('upload.index'));
+        ->assertRedirect();
 
     $this->assertDatabaseHas('design_files', [
         'organization_id' => $org->id,
@@ -192,12 +193,18 @@ test('daily qa run limit blocks further uploads', function () {
     $org = Organization::factory()->onPlan('free')->create(); // 5 daily runs
     $user->organizations()->attach($org, ['role' => 'owner']);
 
-    // Exhaust the daily limit by creating 5 design_files records for today.
+    // Exhaust the daily limit by creating 5 qa_run records for today.
     DesignFile::factory()->count(5)->create([
         'organization_id' => $org->id,
         'user_id' => $user->id,
         'created_at' => now(),
-    ]);
+    ])->each(function (DesignFile $designFile) use ($org) {
+        QaRun::factory()->create([
+            'organization_id' => $org->id,
+            'design_file_id' => $designFile->id,
+            'created_at' => now(),
+        ]);
+    });
 
     $file = UploadedFile::fake()->create('design.dst', 10);
 

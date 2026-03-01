@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'StitchSentry Demo Org',
         ]);
 
+        $organization->users()->attach($user);
+
         $project = Project::factory()->create([
             'organization_id' => $organization->id,
             'name' => 'Demo Project',

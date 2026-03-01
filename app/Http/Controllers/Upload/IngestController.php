@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Upload;
 use App\Domain\Billing\Services\FeatureGate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Upload\IngestRequest;
+use App\Jobs\CreateQaRunJob;
 use App\Models\DesignFile;
+use App\Models\QaRun;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 
 class IngestController extends Controller
 {
-    public function __construct(private readonly FeatureGate $featureGate) {}
+    public function __construct(private readonly FeatureGate $featureGate)
+    {
+    }
 
     /**
      * Handle an authenticated file upload — validate, store to S3, and record.
@@ -69,11 +73,15 @@ class IngestController extends Controller
             'status' => 'uploaded',
         ]);
 
-        // TODO (ISSUE 2.3): dispatch CreateQaRunJob($designFile) here.
-
-        return to_route('upload.index')->with([
-            'uploadSuccess' => true,
-            'designFileId' => $designFile->id,
+        $qaRun = QaRun::create([
+            'organization_id' => $org->id,
+            'design_file_id' => $designFile->id,
+            'preset' => 'custom',
+            'status' => 'queued',
         ]);
+
+        CreateQaRunJob::dispatch($qaRun)->onQueue('ingest');
+
+        return to_route('qa-runs.show', $qaRun);
     }
 }
