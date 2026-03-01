@@ -3,18 +3,22 @@
 namespace App\Domain\Qa\Services;
 
 use DomainException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ParserClient
 {
     /**
-     * Tiny 1×1 transparent PNG used as placeholder in mock mode.
+     * Tiny 1×1 red RGB PNG used as placeholder in mock mode.
      * Raw binary of a valid minimal PNG file (68 bytes).
      *
      * @var string
      */
     private const MOCK_PNG = "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82";
+
+    /** Maximum bytes of error response body to include in logs. */
+    private const LOG_BODY_LIMIT = 2048;
 
     /**
      * Parse an embroidery file and return metrics.
@@ -40,9 +44,20 @@ class ParserClient
         $response = $this->sendRequest('POST', '/parse', [
             'disk' => $disk,
             'path' => $storagePath,
-        ]);
+        ], 'application/json');
 
-        return $response->json();
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            Log::error('ParserClient: invalid JSON payload for metrics', [
+                'status' => $response->status(),
+                'body' => substr($response->body(), 0, self::LOG_BODY_LIMIT),
+            ]);
+
+            throw new DomainException('Parser service returned invalid metrics data.');
+        }
+
+        return $payload;
     }
 
     /**
@@ -59,7 +74,7 @@ class ParserClient
         return $this->sendRequest('POST', '/render/preview', [
             'disk' => $disk,
             'path' => $storagePath,
-        ])->body();
+        ], 'image/png')->body();
     }
 
     /**
@@ -76,7 +91,7 @@ class ParserClient
         return $this->sendRequest('POST', '/render/density', [
             'disk' => $disk,
             'path' => $storagePath,
-        ])->body();
+        ], 'image/png')->body();
     }
 
     /**
@@ -93,7 +108,7 @@ class ParserClient
         return $this->sendRequest('POST', '/render/jumps', [
             'disk' => $disk,
             'path' => $storagePath,
-        ])->body();
+        ], 'image/png')->body();
     }
 
     /**
@@ -112,10 +127,20 @@ class ParserClient
     /**
      * Send a signed JSON request to the parser service.
      *
-     * @throws DomainException on non-2xx response.
+     * @throws DomainException on misconfiguration or non-2xx response.
      */
-    private function sendRequest(string $method, string $path, array $payload): \Illuminate\Http\Client\Response
+    private function sendRequest(string $method, string $path, array $payload, string $accept): Response
     {
+        $baseUrl = rtrim((string) config('parser.base_url'), '/');
+
+        if ($baseUrl === '') {
+            throw new DomainException('Parser service misconfigured: "parser.base_url" is not set.');
+        }
+
+        if ((string) config('parser.secret') === '') {
+            throw new DomainException('Parser service misconfigured: "parser.secret" is not set.');
+        }
+
         try {
             $body = json_encode($payload, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
@@ -125,12 +150,11 @@ class ParserClient
         $timestamp = time();
         $signature = $this->buildSignature($timestamp, $method, $path, $body);
 
-        $baseUrl = rtrim((string) config('parser.base_url'), '/');
         $url = $baseUrl.$path;
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
+            'Accept' => $accept,
             'X-SS-Timestamp' => (string) $timestamp,
             'X-SS-Signature' => $signature,
         ])
@@ -141,11 +165,14 @@ class ParserClient
             ->send($method, $url);
 
         if (! $response->successful()) {
+            $rawBody = $response->body();
+
             Log::error('ParserClient: non-2xx response', [
                 'method' => $method,
                 'path' => $path,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => substr($rawBody, 0, self::LOG_BODY_LIMIT),
+                'body_length' => strlen($rawBody),
             ]);
 
             throw new DomainException('Parser service returned an error. Please try again later.');

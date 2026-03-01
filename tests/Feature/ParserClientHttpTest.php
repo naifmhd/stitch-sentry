@@ -44,6 +44,54 @@ test('parse sends correct JSON payload with disk and path', function () {
     });
 });
 
+test('parse sends Accept: application/json header', function () {
+    config([
+        'parser.mock_enabled' => false,
+        'parser.base_url' => 'https://parser.example.com',
+        'parser.secret' => 'signing-secret',
+        'parser.timeout_seconds' => 20,
+        'parser.connect_timeout_seconds' => 5,
+        'parser.retry_times' => 1,
+        'parser.retry_sleep_ms' => 0,
+    ]);
+
+    Http::fake([
+        'https://parser.example.com/parse' => Http::response(['width_mm' => 1.0], 200),
+    ]);
+
+    $client = new ParserClient;
+    $client->parse('s3', 'designs/file.dst');
+
+    Http::assertSent(fn ($request) => $request->header('Accept')[0] === 'application/json');
+});
+
+test('render endpoints send Accept: image/png header', function () {
+    config([
+        'parser.mock_enabled' => false,
+        'parser.base_url' => 'https://parser.example.com',
+        'parser.secret' => 'signing-secret',
+        'parser.timeout_seconds' => 20,
+        'parser.connect_timeout_seconds' => 5,
+        'parser.retry_times' => 1,
+        'parser.retry_sleep_ms' => 0,
+    ]);
+
+    $pngBytes = "\x89PNG\r\n\x1a\nfake";
+
+    Http::fake([
+        'https://parser.example.com/render/*' => Http::response($pngBytes, 200),
+    ]);
+
+    $client = new ParserClient;
+    $client->renderPreview('s3', 'designs/file.dst');
+    $client->renderDensity('s3', 'designs/file.dst');
+    $client->renderJumps('s3', 'designs/file.dst');
+
+    Http::assertSentCount(3);
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/render/')
+        && $request->header('Accept')[0] === 'image/png');
+});
+
 test('parse sets X-SS-Timestamp and X-SS-Signature headers', function () {
     config([
         'parser.mock_enabled' => false,
@@ -116,6 +164,53 @@ test('parse throws DomainException on non-2xx response', function () {
 
     expect(fn () => $client->parse('s3', 'designs/bad.dst'))
         ->toThrow(DomainException::class, 'Parser service returned an error');
+});
+
+test('parse throws DomainException when base_url is not configured', function () {
+    config([
+        'parser.mock_enabled' => false,
+        'parser.base_url' => '',
+        'parser.secret' => 'secret',
+    ]);
+
+    $client = new ParserClient;
+
+    expect(fn () => $client->parse('s3', 'designs/file.dst'))
+        ->toThrow(DomainException::class, 'parser.base_url');
+});
+
+test('parse throws DomainException when secret is not configured', function () {
+    config([
+        'parser.mock_enabled' => false,
+        'parser.base_url' => 'https://parser.example.com',
+        'parser.secret' => '',
+    ]);
+
+    $client = new ParserClient;
+
+    expect(fn () => $client->parse('s3', 'designs/file.dst'))
+        ->toThrow(DomainException::class, 'parser.secret');
+});
+
+test('parse throws DomainException when response is not a JSON array', function () {
+    config([
+        'parser.mock_enabled' => false,
+        'parser.base_url' => 'https://parser.example.com',
+        'parser.secret' => 'secret',
+        'parser.timeout_seconds' => 20,
+        'parser.connect_timeout_seconds' => 5,
+        'parser.retry_times' => 1,
+        'parser.retry_sleep_ms' => 0,
+    ]);
+
+    Http::fake([
+        'https://parser.example.com/parse' => Http::response('not-json', 200),
+    ]);
+
+    $client = new ParserClient;
+
+    expect(fn () => $client->parse('s3', 'designs/file.dst'))
+        ->toThrow(DomainException::class, 'Parser service returned invalid metrics data');
 });
 
 test('renderPreview sends correct payload and returns body', function () {
