@@ -4,10 +4,12 @@ use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
-Route::middleware([
+$settingsMiddleware = array_filter([
     'auth',
-    ValidateSessionWithWorkOS::class,
-])->group(function () {
+    app()->environment(['local', 'testing']) ? null : ValidateSessionWithWorkOS::class,
+]);
+
+Route::middleware($settingsMiddleware)->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
