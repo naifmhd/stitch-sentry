@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dev\BroadcastTestController;
+use App\Http\Controllers\Dev\FeatureGateCheckController;
 use App\Http\Controllers\Dev\PingQueueController;
 use App\Http\Controllers\Organizations\OrgSettingsController;
 use App\Http\Controllers\Organizations\OrgSwitcherController;
@@ -27,6 +28,7 @@ if (app()->environment(['local', 'testing'])) {
         Route::post('dev/ping', PingQueueController::class)->name('dev.ping');
         Route::get('dev/reverb-test', [BroadcastTestController::class, 'show'])->name('dev.reverb-test');
         Route::post('dev/reverb-test', [BroadcastTestController::class, 'broadcast'])->name('dev.broadcast-test');
+        Route::post('dev/feature-gate-check', FeatureGateCheckController::class)->name('dev.feature-gate-check');
     });
 }
 

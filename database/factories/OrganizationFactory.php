@@ -18,6 +18,12 @@ class OrganizationFactory extends Factory
     {
         return [
             'name' => fake()->company(),
+            'plan_slug' => 'free',
         ];
+    }
+
+    public function onPlan(string $planSlug): static
+    {
+        return $this->state(['plan_slug' => $planSlug]);
     }
 }

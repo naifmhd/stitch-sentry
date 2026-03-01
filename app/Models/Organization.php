@@ -17,6 +17,7 @@ class Organization extends Model
      */
     protected $fillable = [
         'name',
+        'plan_slug',
     ];
 
     /** @return BelongsToMany<User, $this> */
