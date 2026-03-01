@@ -12,6 +12,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - php - 8.4.18
 - inertiajs/inertia-laravel (INERTIA_LARAVEL) - v2
 - laravel/framework (LARAVEL) - v12
+- laravel/horizon (HORIZON) - v5
 - laravel/prompts (PROMPTS) - v0
 - laravel/wayfinder (WAYFINDER) - v0
 - laravel/boost (BOOST) - v2
@@ -21,6 +22,12 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/sail (SAIL) - v1
 - pestphp/pest (PEST) - v4
 - phpunit/phpunit (PHPUNIT) - v12
+- @inertiajs/vue3 (INERTIA_VUE) - v2
+- tailwindcss (TAILWINDCSS) - v4
+- vue (VUE) - v3
+- @laravel/vite-plugin-wayfinder (WAYFINDER_VITE) - v0
+- eslint (ESLINT) - v9
+- prettier (PRETTIER) - v3
 
 ## Skills Activation
 
@@ -28,6 +35,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - `wayfinder-development` — Activates whenever referencing backend routes in frontend components. Use when importing from @/actions or @/routes, calling Laravel routes from TypeScript, or working with Wayfinder route functions.
 - `pest-testing` — Tests applications using the Pest 4 PHP framework. Activates when writing tests, creating unit or feature tests, adding assertions, testing Livewire components, browser testing, debugging test failures, working with datasets or mocking; or when the user mentions test, spec, TDD, expects, assertion, coverage, or needs to verify functionality works.
+- `inertia-vue-development` — Develops Inertia.js v2 Vue client-side applications. Activates when creating Vue pages, forms, or navigation; using &lt;Link&gt;, &lt;Form&gt;, useForm, or router; working with deferred props, prefetching, or polling; or when user mentions Vue with Inertia, Vue pages, Vue forms, or Vue navigation.
+- `tailwindcss-development` — Styles applications using Tailwind CSS v4 utilities. Activates when adding styles, restyling components, working with gradients, spacing, layout, flex, grid, responsive design, dark mode, colors, typography, or borders; or when the user mentions CSS, styling, classes, Tailwind, restyle, hero section, cards, buttons, or any visual/UI changes.
 
 ## Conventions
 
@@ -50,7 +59,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Documentation Files
 
-- Only create new documentation files if explicitly requested. Updating existing docs (README / existing docs/\*) is allowed when necessary.
+- You must only create documentation files if explicitly requested by the user.
 
 ## Replies
 
@@ -114,7 +123,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use appropriate PHP type hints for method parameters.
 
 <!-- Explicit Return Types and Method Params -->
-
 ```php
 protected function isAccessible(User $user, ?string $path = null): bool
 {
@@ -155,6 +163,7 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Inertia creates fully client-side rendered SPAs without modern SPA complexity, leveraging existing server-side patterns.
 - Components live in `resources/js/pages` (unless specified in `vite.config.js`). Use `Inertia::render()` for server-side routing instead of Blade views.
 - ALWAYS use `search-docs` tool for version-specific Inertia documentation and updated code examples.
+- IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 # Inertia v2
 
@@ -270,44 +279,20 @@ Wayfinder generates TypeScript functions for Laravel routes. Import from `@/acti
 - Do NOT delete tests without approval.
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Pest documentation and updated code examples.
 - IMPORTANT: Activate `pest-testing` every time you're working with a Pest or testing-related task.
-- Prefer feature tests unless a unit test is clearly better (e.g., pure services).
 
-## StitchSentry Project Rules (must follow)
+=== inertia-vue/core rules ===
 
-### Architecture
+# Inertia + Vue
 
-- Keep domain logic in `app/Domain/*` (Qa, Batch, Billing, Llm).
-- Controllers must be thin; validation uses Form Requests.
-- Before implementing a feature, read the relevant docs in docs/dev/\* and treat them as the source of truth.
-- Treat docs/dev/\* (conventions, events, rule keys) as the source of truth.
+Vue components must have a single root element.
+- IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
-### Automation
+=== tailwindcss/core rules ===
 
-- Never block HTTP for long operations. Use queued jobs with named queues:
-    - ingest, parse, render, qa, ai, pdf, export
-- Use Horizon for monitoring.
+# Tailwind CSS
 
-### Realtime (Reverb)
-
-- All realtime payloads must match `docs/dev/realtime-events.md` exactly.
-- Broadcast progress after DB updates (not before).
-- QA run page must fetch initial state via HTTP and then apply realtime updates.
-
-### Paywall
-
-- All paid features must be enforced server-side via FeatureGate (controllers AND jobs).
-- Credits debits must be idempotent (unique idempotency_key per org).
-
-### QA rules
-
-- Rule keys must match `docs/dev/qa-rules.md` exactly.
-- Thresholds come from `config/qa.php`.
-
-### LLM
-
-- All LLM calls must go through the provider router abstraction (OpenAI/Gemini/Anthropic).
-- Allow per-org API keys stored encrypted at rest.
-- Never send raw files to LLM—only structured metrics + findings.
-- Require strict JSON output and validate it before saving.
+- Always use existing Tailwind conventions; check project patterns before adding new ones.
+- IMPORTANT: Always use `search-docs` tool for version-specific Tailwind CSS documentation and updated code examples. Never rely on training data.
+- IMPORTANT: Activate `tailwindcss-development` every time you're working with a Tailwind CSS or styling-related task.
 
 </laravel-boost-guidelines>
