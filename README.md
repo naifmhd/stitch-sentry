@@ -124,8 +124,14 @@ VITE_REVERB_HOST="${REVERB_HOST}"
 VITE_REVERB_PORT="${REVERB_PORT}"
 VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 
-# Storage (local filesystem for dev; switch to S3/R2 later)
-FILESYSTEM_DISK=public
+# Storage — use 'local' for local dev (no S3 needed), 's3' for staging/production.
+# When using S3-compatible storage (Cloudflare R2, DigitalOcean Spaces, etc.) also set
+# AWS_ENDPOINT and AWS_USE_PATH_STYLE_ENDPOINT=true.
+FILESYSTEM_DISK=local
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
 
 # LLM providers (platform keys; orgs can override in-app)
 LLM_DEFAULT_PROVIDER=openai

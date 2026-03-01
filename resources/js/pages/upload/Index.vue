@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     AlertCircle,
     CheckCircle2,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import type { Component } from 'vue';
+import IngestController from '@/actions/App/Http/Controllers/Upload/IngestController';
 import UploadController from '@/actions/App/Http/Controllers/Upload/UploadController';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -20,13 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-
-/**
- * The backend ingest endpoint (ISSUE 2.2) is not yet implemented.
- * Set this flag to `true` once the endpoint exists, then wire
- * `submitUpload()` to the Wayfinder action (see the TODO below).
- */
-const UPLOAD_BACKEND_READY = false as boolean;
 
 type Props = {
     maxFileSizeMb: number;
@@ -148,39 +142,35 @@ function onDrop(event: DragEvent): void {
 
 // Upload
 function submitUpload(): void {
-    if (!selectedFile.value) return;
-
-    if (!UPLOAD_BACKEND_READY) {
-        errorMessage.value =
-            'Upload backend not implemented yet (ISSUE 2.2). ' +
-            'Once the ingest endpoint is ready, set UPLOAD_BACKEND_READY = true ' +
-            'and wire the Wayfinder action inside submitUpload().';
-        uploadState.value = 'error';
+    if (!selectedFile.value) {
         return;
     }
 
-    /**
-     * TODO (ISSUE 2.2): Implement real upload here.
-     *
-     * import IngestController from '@/actions/App/Http/Controllers/Upload/IngestController';
-     * import { router } from '@inertiajs/vue3';
-     *
-     * const formData = new FormData();
-     * formData.append('file', selectedFile.value);
-     * uploadState.value = 'uploading';
-     * uploadProgress.value = 0;
-     * errorMessage.value = null;
-     *
-     * router.post(IngestController.url(), formData, {
-     *     forceFormData: true,
-     *     onProgress: (p) => { uploadProgress.value = p.percentage ?? 0; },
-     *     onSuccess: () => { uploadState.value = 'success'; },
-     *     onError: (errors) => {
-     *         uploadState.value = 'error';
-     *         errorMessage.value = Object.values(errors).flat().join(' ');
-     *     },
-     * });
-     */
+    const formData = new FormData();
+    formData.append('file', selectedFile.value);
+
+    uploadState.value = 'uploading';
+    uploadProgress.value = 0;
+    errorMessage.value = null;
+
+    router.post(IngestController.url(), formData, {
+        forceFormData: true,
+        preserveState: true,
+        preserveScroll: true,
+        onProgress: (progress) => {
+            uploadProgress.value = progress.percentage ?? 0;
+        },
+        onSuccess: () => {
+            uploadState.value = 'success';
+            uploadProgress.value = 100;
+        },
+        onError: (errors: Record<string, string>) => {
+            uploadState.value = 'error';
+            errorMessage.value =
+                Object.values(errors).flat().join(' ') ||
+                'An unexpected error occurred. Please try again.';
+        },
+    });
 }
 </script>
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Dev\FeatureGateCheckController;
 use App\Http\Controllers\Dev\PingQueueController;
 use App\Http\Controllers\Organizations\OrgSettingsController;
 use App\Http\Controllers\Organizations\OrgSwitcherController;
+use App\Http\Controllers\Upload\IngestController;
 use App\Http\Controllers\Upload\UploadController;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
@@ -22,6 +23,9 @@ $authenticatedMiddleware = array_filter([
 Route::middleware($authenticatedMiddleware)->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('upload', UploadController::class)->name('upload.index');
+    Route::post('upload/ingest', IngestController::class)
+        ->middleware('throttle:10,1')
+        ->name('upload.ingest');
 
     Route::post('organizations/switch', OrgSwitcherController::class)->name('organizations.switch');
     Route::get('organizations/{organization}/settings', [OrgSettingsController::class, 'show'])->name('organizations.settings');

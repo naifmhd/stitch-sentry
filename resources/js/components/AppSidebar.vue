@@ -19,7 +19,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { billing, dashboard } from '@/routes';
+import { edit as profileEdit } from '@/routes/profile';
+import { index as uploadIndex } from '@/routes/upload';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -30,7 +32,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Upload',
-        href: '#',
+        href: uploadIndex(),
         icon: Upload,
     },
     {
@@ -40,12 +42,12 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Billing',
-        href: '#',
+        href: billing(),
         icon: CreditCard,
     },
     {
         title: 'Settings',
-        href: '#',
+        href: profileEdit(),
         icon: Settings,
     },
 ];

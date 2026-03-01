@@ -13,7 +13,7 @@ Route::middleware(['guest'])->group(function () {
     Route::post('local-login', function (Request $request) {
         abort_unless(app()->environment(['local', 'testing']), 404);
 
-        $localUser = User::query()->find(1);
+        $localUser = User::query()->first();
 
         if ($localUser === null) {
             return redirect()->route('login');
