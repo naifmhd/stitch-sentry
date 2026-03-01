@@ -3,6 +3,8 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dev\BroadcastTestController;
 use App\Http\Controllers\Dev\PingQueueController;
+use App\Http\Controllers\Organizations\OrgSettingsController;
+use App\Http\Controllers\Organizations\OrgSwitcherController;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
@@ -15,6 +17,9 @@ $authenticatedMiddleware = array_filter([
 
 Route::middleware($authenticatedMiddleware)->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::post('organizations/switch', OrgSwitcherController::class)->name('organizations.switch');
+    Route::get('organizations/{organization}/settings', [OrgSettingsController::class, 'show'])->name('organizations.settings');
 });
 
 if (app()->environment(['local', 'testing'])) {

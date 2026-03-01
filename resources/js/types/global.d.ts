@@ -13,12 +13,19 @@ declare module 'vite/client' {
     }
 }
 
+type OrgSummary = {
+    id: number;
+    name: string;
+};
+
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            currentOrganization: OrgSummary | null;
+            organizations: OrgSummary[];
             [key: string]: unknown;
         };
     }
